@@ -14,6 +14,57 @@ export default function ChatPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+
+    const userMessage: Message = { role: 'user', content: input.trim() };
+    const nextHistory = [...messages, userMessage];
+
+    setMessages(nextHistory);
+    setInput('');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'demo-user',
+          message: userMessage.content,
+          stream: false,
+          history: messages
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const assistantReply = data.response || 'No response.';
+      setMessages((prev) => [...prev, { role: 'assistant', content: assistantReply }]);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? `Could not reach Orchestrix API (${API_BASE}). ${err.message}`
+          : `Could not reach Orchestrix API (${API_BASE}).`;
+
+      setError(message);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            '⚠️ I could not connect to the backend API. Please make sure FastAPI is running and NEXT_PUBLIC_API_BASE is correct.'
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,6 +103,11 @@ export default function ChatPanel() {
           </div>
         ))}
       </div>
+
+      {error ? (
+        <p className="mb-2 rounded-lg border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">{error}</p>
+      ) : null}
+
       <form onSubmit={handleSubmit} className="mt-auto flex gap-2">
         <input
           value={input}

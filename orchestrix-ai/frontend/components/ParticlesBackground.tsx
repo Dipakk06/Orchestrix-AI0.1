@@ -2,6 +2,26 @@
 
 import { motion } from 'framer-motion';
 
+interface Particle {
+  id: number;
+  x: string;
+  y: string;
+  size: number;
+  duration: number;
+}
+
+const seededFloat = (seed: number, min = 0, max = 1) => {
+  const x = Math.sin(seed * 9999) * 10000;
+  const fraction = x - Math.floor(x);
+  return min + fraction * (max - min);
+};
+
+const particles: Particle[] = Array.from({ length: 24 }, (_, i) => ({
+  id: i,
+  x: `${seededFloat(i + 1, 0, 100).toFixed(2)}%`,
+  y: `${seededFloat(i + 101, 0, 100).toFixed(2)}%`,
+  size: Number(seededFloat(i + 201, 2, 6).toFixed(2)),
+  duration: Number(seededFloat(i + 301, 6, 12).toFixed(2))
 const particles = Array.from({ length: 24 }, (_, i) => ({
   id: i,
   x: `${Math.random() * 100}%`,
