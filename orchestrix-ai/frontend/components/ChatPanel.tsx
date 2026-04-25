@@ -65,6 +65,30 @@ export default function ChatPanel() {
     } finally {
       setLoading(false);
     }
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    const userMessage: Message = { role: 'user', content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+
+    const response = await fetch(`${API_BASE}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: 'demo-user',
+        message: userMessage.content,
+        stream: false,
+        history: messages
+      })
+    });
+
+    const data = await response.json();
+    setMessages((prev) => [...prev, { role: 'assistant', content: data.response || 'No response.' }]);
+    setLoading(false);
   };
 
   return (

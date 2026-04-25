@@ -22,6 +22,12 @@ const particles: Particle[] = Array.from({ length: 24 }, (_, i) => ({
   y: `${seededFloat(i + 101, 0, 100).toFixed(2)}%`,
   size: Number(seededFloat(i + 201, 2, 6).toFixed(2)),
   duration: Number(seededFloat(i + 301, 6, 12).toFixed(2))
+const particles = Array.from({ length: 24 }, (_, i) => ({
+  id: i,
+  x: `${Math.random() * 100}%`,
+  y: `${Math.random() * 100}%`,
+  size: 2 + Math.random() * 4,
+  duration: 6 + Math.random() * 6
 }));
 
 export default function ParticlesBackground() {
