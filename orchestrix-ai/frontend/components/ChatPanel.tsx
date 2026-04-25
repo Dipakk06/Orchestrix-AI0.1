@@ -1,0 +1,71 @@
+'use client';
+
+import { FormEvent, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
+
+export default function ChatPanel() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    const userMessage: Message = { role: 'user', content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+
+    const response = await fetch(`${API_BASE}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: 'demo-user',
+        message: userMessage.content,
+        stream: false,
+        history: messages
+      })
+    });
+
+    const data = await response.json();
+    setMessages((prev) => [...prev, { role: 'assistant', content: data.response || 'No response.' }]);
+    setLoading(false);
+  };
+
+  return (
+    <section className="glass flex h-[70vh] flex-col p-4">
+      <div className="mb-3 flex-1 space-y-3 overflow-auto pr-1">
+        {messages.map((m, idx) => (
+          <div key={idx} className={`rounded-xl p-3 ${m.role === 'user' ? 'bg-indigo-500/20' : 'bg-slate-800/70'}`}>
+            <p className="mb-1 text-xs uppercase text-indigo-300">{m.role}</p>
+            <div className="prose prose-invert max-w-none text-sm">
+              <ReactMarkdown>{m.content}</ReactMarkdown>
+            </div>
+          </div>
+        ))}
+      </div>
+      <form onSubmit={handleSubmit} className="mt-auto flex gap-2">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="flex-1 rounded-xl border border-indigo-400/30 bg-slate-900/70 px-4 py-2 text-sm outline-none focus:border-indigo-300"
+          placeholder="Ask Orchestrix AI..."
+        />
+        <button
+          disabled={loading}
+          className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2 text-sm font-medium disabled:opacity-60"
+        >
+          {loading ? 'Thinking...' : 'Send'}
+        </button>
+      </form>
+    </section>
+  );
+}
